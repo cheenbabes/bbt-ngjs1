@@ -44,7 +44,7 @@ function handleError(res, reason, message, code) {
   //ACTUAL SERVER.JS CODE ==== THESE ARE THE REAL ROUTES FOR THE APP
 function getSum(array){
     return array.map((record) => {
-      return record.Remittance;
+      return parseFloat(record.Remittance);
     }).reduce((a,b) => {
       return a + b;
     }, 0);
