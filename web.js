@@ -104,9 +104,9 @@ function getSum(array){
         return Promise.map(uniqueTemples, (temple) => {
           return getDataFromDb({'Year': lastYear.year(), 'Temple': temple}).then((result) => {
             //We have all the records for the previous year for a particular temple
-            //Calculate the 2018 goal from the 2017 sum.
+            //Calculate the current year goal from the prewvious year sum
             ret[temple] = ret[temple] || {};
-            ret[temple]['goal'] = getSum(result) * IMPROVEMENT;
+            ret[temple]['goal'] = (getSum(result) * IMPROVEMENT).toFixed(0);
           });
         });
       }).then(()=>{
@@ -114,7 +114,7 @@ function getSum(array){
         return Promise.map(uniqueTemples, (temple) => {
           return getDataFromDb({'Year': thisYear, 'Temple': temple}).then((result) => {
             //We have all the records for the previous year for a particular temple
-            //Calculate the 2018 goal from the 2017 sum.
+            //Calculate the current YTD sum
             ret[temple]['ytd'] = getSum(result);
           });
         });
