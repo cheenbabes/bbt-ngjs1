@@ -4,8 +4,9 @@ var express = require("express");
 var logfmt = require("logfmt");
 var moment = require("moment");
 var bodyParser = require("body-parser");
-moment().format();
+var Promise = require('bluebird');
 var mongodb = require("mongodb");
+moment().format();
 
 var app = express();
 app.use(logfmt.requestLogger());
@@ -48,12 +49,31 @@ function getSum(array){
       return a + b;
     }, 0);
   }
+
+  function getDataFromDb(search /*MongoDB search obj*/, strict /*fail if 0 results*/){
+    return new Promise((resolve, reject) => {
+      return db.collection(REMITTANCE_COLLECTION).find(search).toArray((err, doc) => {
+        if(err){
+          reject(err.message);
+        } else{
+          if(strict && doc.length == 0){
+            reject('Did not find any entries matching the search criteria');
+          }else{
+            resolve(doc);
+          }
+        }
+      });
+    });
+  }
   
   var REMITTANCE_COLLECTION = "remittance";
+  //10% improvement year over year
+  const IMPROVEMENT = 1.10;
+
   app.get("/api/remittances", function(req, res) {
     db.collection(REMITTANCE_COLLECTION).find({}).toArray(function(err, doc) {
       if (err) {
-        handleError(res, err.message, "Failed to get remittance.");
+        handleError(res, err.message, "Failed to get the remittance collection.");
       } else {
         return res.status(200).json({
           data: doc,
@@ -63,7 +83,54 @@ function getSum(array){
       }
     });
   });
-  
+
+  app.get("/api/dashboard", function(req, res){
+    let now = moment();
+    let monthNumber = moment().month();
+    let thisMonth = moment().month(monthNumber).format('MMMM');
+    let thisYear = now.year(); //2017 // <-- use this because we don't have 2018 data yet
+    let lastYear = moment().subtract(1, 'year');
+    let ret = {};
+    let uniqueTemples;
+
+    return new Promise((resolve, reject) => {
+      //First, get the unique temples throughout all history
+      return getDataFromDb({}).then((results) => {
+        uniqueTemples = results.map((record) => {
+          return record.Temple;
+        });
+        uniqueTemples = [...new Set(uniqueTemples)];
+      }).then(() => {
+        return Promise.map(uniqueTemples, (temple) => {
+          return getDataFromDb({'Year': lastYear.year(), 'Temple': temple}).then((result) => {
+            //We have all the records for the previous year for a particular temple
+            //Calculate the 2018 goal from the 2017 sum.
+            ret[temple] = ret[temple] || {};
+            ret[temple]['goal'] = getSum(result) * IMPROVEMENT;
+          });
+        });
+      }).then(()=>{
+        //get the current year to date
+        return Promise.map(uniqueTemples, (temple) => {
+          return getDataFromDb({'Year': thisYear, 'Temple': temple}).then((result) => {
+            //We have all the records for the previous year for a particular temple
+            //Calculate the 2018 goal from the 2017 sum.
+            ret[temple]['ytd'] = getSum(result);
+          });
+        });
+      }).then(() => {
+        return Promise.map(uniqueTemples, (temple) => {
+          return getDataFromDb({'Year': thisYear, 'Temple': temple, 'Month': thisMonth}).then((result) => {
+            //current month calcs
+            ret[temple]['currentMonth'] = result;
+          });
+        });
+      }).then(() =>{
+        return res.status(200).json(ret);
+      });
+    });
+  });
+
   app.get("/api/remittances/temple/:temple", function(req, res) {
     db.collection(REMITTANCE_COLLECTION).find({ "Temple": req.params.temple}).toArray(function(err, doc) {
       if (err) {
