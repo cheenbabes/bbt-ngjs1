@@ -54,6 +54,7 @@ function getSum(array){
     return new Promise((resolve, reject) => {
       return db.collection(REMITTANCE_COLLECTION).find(search).toArray((err, doc) => {
         if(err){
+          console.log("Error getting data from db", err);
           reject(err.message);
         } else{
           if(strict && doc.length == 0){
@@ -105,6 +106,11 @@ function getSum(array){
           return getDataFromDb({'Year': lastYear.year(), 'Temple': temple}).then((result) => {
             //We have all the records for the previous year for a particular temple
             //Calculate the current year goal from the prewvious year sum
+            console.log("=======================================");
+            console.log("Getting data for " + lastYear.year() + " for " + temple);
+            console.log(JSON.stringify(result));
+            console.log("The goal will be " + (getSum(result) * IMPROVEMENT).toFixed(0));
+            console.log("=======================================\n")
             ret[temple] = ret[temple] || {};
             ret[temple]['goal'] = (getSum(result) * IMPROVEMENT).toFixed(0);
           });
