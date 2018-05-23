@@ -169,7 +169,7 @@ function getSum(array){
   
   app.get("/api/remittances/year/:year", function(req, res){
     db.collection(REMITTANCE_COLLECTION)
-    .find({"Temple": req.params.temple, "Year": parseInt(req.params.year)})
+    .find({"Year": parseInt(req.params.year)})
     .toArray(function(err, doc){
       if (err) {
         handleError(res, err.message, "Failed to get yearly data");
