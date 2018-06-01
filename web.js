@@ -42,12 +42,29 @@ function handleError(res, reason, message, code) {
 
 
   //ACTUAL SERVER.JS CODE ==== THESE ARE THE REAL ROUTES FOR THE APP
-function getSum(array){
-    return array.map((record) => {
-      return parseFloat(record.Remittance);
-    }).reduce((a,b) => {
-      return a + b;
-    }, 0);
+  function getSum(array, field ="Remittance"){
+      return array.map((record) => {
+      var val = record[field];
+      if(typeof val === "string"){
+        //get rid of commas if they exist
+        val = parseFloat(val.replace(/,/g, ''));
+      }
+      return val;
+      }).reduce((a,b) => {
+        return a + b;
+      }, 0);
+    }
+
+  function getMax(array, field = "Remittance"){
+    valArray = array.map((record) => {
+      var val = record[field];
+      if(typeof val === "string"){
+        //get rid of commas if they exist
+        val = parseFloat(val.replace(/,/g, ''));
+      }
+      return val;
+    });
+    return Math.max(...valArray);
   }
 
   function getDataFromDb(search /*MongoDB search obj*/, strict /*fail if 0 results*/){
@@ -79,7 +96,7 @@ function getSum(array){
         return res.status(200).json({
           data: doc,
           sum: getSum(doc),
-          max: Math.max(...doc.map(o => o.Remittance))
+          max: getMax(doc)
         });
       }
     });
@@ -145,7 +162,7 @@ function getSum(array){
         return res.status(200).json({
           data: doc,
           sum: getSum(doc),
-          max: Math.max(...doc.map(o => o.Remittance))
+          max: getMax(doc)
         });
       }
     });
@@ -161,7 +178,7 @@ function getSum(array){
         return res.status(200).json({
           data: doc,
           sum: getSum(doc),
-          max: Math.max(...doc.map(o => o.Remittance))
+          max: getMax(doc)
         });
       }
     });
@@ -177,7 +194,7 @@ function getSum(array){
         return res.status(200).json({
           data: doc,
           sum: getSum(doc),
-          max: Math.max(...doc.map(o => o.Remittance))
+          max: getMax(doc)
         });
       }
     });
@@ -191,7 +208,7 @@ function getSum(array){
           return res.status(200).json({
             data: doc,
             sum: getSum(doc),
-            max: Math.max(...doc.map(o => o.Remittance))
+            max: getMax(doc)
           });
         }
       });
@@ -205,7 +222,7 @@ function getSum(array){
           return res.status(200).json({
             data: doc,
             sum: getSum(doc),
-            max: Math.max(...doc.map(o => o.Remittance))
+            max: getMax(doc)
           });
         }
       });
@@ -221,7 +238,7 @@ function getSum(array){
           return res.status(200).json({
             data: doc,
             sum: getSum(doc),
-            max: Math.max(...doc.map(o => o.Remittance))
+            max: getMax(doc)
           });
         }
       });
